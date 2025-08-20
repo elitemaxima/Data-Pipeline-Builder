@@ -277,38 +277,50 @@ const KafkaLogs: React.FC = () => {
       );
     } else if (eventType === "block_started") {
       const blockType = log.raw_data?.block_type || "unknown";
+      const blockName = log.raw_data?.block_name || "unknown";
+      const blockPurpose = log.raw_data?.block_purpose || "";
+
       return (
         <div className="space-y-1">
           <div className="text-lg font-semibold text-purple-600">
             ⚡ [{timeStr}] Block #{blockRunId} ({blockType}) STARTED
           </div>
           <div className="text-sm text-gray-600 ml-4">
-            📍 Topic: {topic} | Block: {blockRunId} | Type: {blockType}
+            📍 Topic: {topic} | Block: {blockRunId} | Name: {blockName}
+            {blockPurpose && ` | Purpose: ${blockPurpose}`}
           </div>
         </div>
       );
     } else if (eventType === "block_completed") {
       const blockType = log.raw_data?.block_type || "unknown";
+      const blockName = log.raw_data?.block_name || "unknown";
+      const blockPurpose = log.raw_data?.block_purpose || "";
       const status = success ? "✅ COMPLETED" : "❌ FAILED";
+
       return (
         <div className="space-y-1">
           <div className="text-lg font-semibold text-green-600">
             🎯 [{timeStr}] Block #{blockRunId} ({blockType}) {status}
           </div>
           <div className="text-sm text-gray-600 ml-4">
-            📍 Topic: {topic} | Block: {blockRunId} | Type: {blockType}
+            📍 Topic: {topic} | Block: {blockRunId} | Name: {blockName}
+            {blockPurpose && ` | Purpose: ${blockPurpose}`}
           </div>
         </div>
       );
     } else if (eventType === "block_failed") {
       const blockType = log.raw_data?.block_type || "unknown";
+      const blockName = log.raw_data?.block_name || "unknown";
+      const blockPurpose = log.raw_data?.block_purpose || "";
+
       return (
         <div className="space-y-1">
           <div className="text-lg font-semibold text-red-600">
             💥 [{timeStr}] Block #{blockRunId} ({blockType}) FAILED
           </div>
           <div className="text-sm text-gray-600 ml-4">
-            📍 Topic: {topic} | Block: {blockRunId} | Type: {blockType}
+            📍 Topic: {topic} | Block: {blockRunId} | Name: {blockName}
+            {blockPurpose && ` | Purpose: ${blockPurpose}`}
           </div>
         </div>
       );
