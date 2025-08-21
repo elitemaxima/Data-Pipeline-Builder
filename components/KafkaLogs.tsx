@@ -26,7 +26,15 @@ interface KafkaLogEntry {
   [key: string]: any;
 }
 
-const KafkaLogs: React.FC = () => {
+interface KafkaLogsProps {
+  onPipelineCompleted?: (pipelineRunId: number) => void;
+  onPipelineFailed?: (pipelineRunId: number) => void;
+}
+
+const KafkaLogs: React.FC<KafkaLogsProps> = ({ 
+  onPipelineCompleted, 
+  onPipelineFailed 
+}) => {
   const [logs, setLogs] = useState<KafkaLogEntry[]>([]);
   const [processedEvents, setProcessedEvents] = useState<Set<string>>(
     new Set()
@@ -57,7 +65,11 @@ const KafkaLogs: React.FC = () => {
     }
 
     // Add to processed events set
-    setProcessedEvents((prev) => new Set([...prev, eventKey]));
+    setProcessedEvents((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(eventKey);
+      return newSet;
+    });
 
     // Add to logs
     setLogs((prev) => [...prev, logData].slice(-500));
@@ -108,6 +120,18 @@ const KafkaLogs: React.FC = () => {
             }
             return [...prev, logData].slice(-500);
           });
+
+          // Call parent callbacks for relevant events
+          if (logData.pipeline_run_id) {
+            if (logData.event_type === "pipeline_completed" && logData.success) {
+              console.log("Pipeline completed, notifying parent:", logData.pipeline_run_id);
+              onPipelineCompleted?.(logData.pipeline_run_id);
+            } else if (logData.event_type === "pipeline_failed") {
+              console.log("Pipeline failed, notifying parent:", logData.pipeline_run_id);
+              onPipelineFailed?.(logData.pipeline_run_id);
+            }
+          }
+
         } catch (error) {
           console.error("Error parsing log data:", error);
         }
@@ -221,15 +245,6 @@ const KafkaLogs: React.FC = () => {
 
   const clearLogs = () => {
     setLogs([]);
-  };
-
-  const toggleStreaming = () => {
-    if (isStreaming) {
-      disconnectWebSocket();
-    } else {
-      setIsStreaming(true);
-      connectWebSocket();
-    }
   };
 
   const getEventTypeDisplay = (eventType: string | undefined): string => {
@@ -359,28 +374,6 @@ const KafkaLogs: React.FC = () => {
             />
             {isConnected ? "Connected" : "Disconnected"}
           </div>
-          <button
-            onClick={toggleStreaming}
-            className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white ${
-              isStreaming
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-green-600 hover:bg-green-700"
-            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-2 ${
-              isStreaming ? "focus:ring-red-500" : "focus:ring-green-500"
-            }`}
-          >
-            {isStreaming ? (
-              <>
-                <Square className="w-4 h-4 mr-2" />
-                Stop
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 mr-2" />
-                Start
-              </>
-            )}
-          </button>
           <button
             onClick={clearLogs}
             className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
